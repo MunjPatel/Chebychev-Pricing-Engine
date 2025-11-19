@@ -1,0 +1,391 @@
+{
+    "Technology: Software & Cloud": {
+        "Microsoft": "MSFT",
+        "Adobe": "ADBE",
+        "Salesforce": "CRM",
+        "Oracle": "ORCL",
+        "SAP": "SAP",
+        "Intuit": "INTU",
+        "ServiceNow": "NOW",
+        "Uber": "UBER",
+        "Airbnb": "ABNB",
+        "Workday": "WDAY",
+        "Snowflake": "SNOW",
+        "Palantir": "PLTR",
+        "Autodesk": "ADSK",
+        "Atlassian": "TEAM",
+        "Datadog": "DDOG",
+        "MongoDB": "MDB",
+        "Zoom Video": "ZM",
+        "HubSpot": "HUBS"
+    },
+
+    "Technology: Hardware & Devices": {
+        "Apple": "AAPL",
+        "Dell Technologies": "DELL",
+        "HP Inc.": "HPQ",
+        "Hewlett Packard Ent": "HPE",
+        "Cisco Systems": "CSCO",
+        "Motorola Solutions": "MSI",
+        "Arista Networks": "ANET",
+        "Western Digital": "WDC",
+        "Seagate Technology": "STX",
+        "NetApp": "NTAP",
+        "Garmin": "GRMN",
+        "Logitech": "LOGI",
+        "GoPro": "GPRO",
+        "Sonos": "SONO"
+    },
+
+    "Semiconductors & Chips": {
+        "NVIDIA": "NVDA",
+        "Taiwan Semiconductor": "TSM",
+        "Broadcom": "AVGO",
+        "AMD": "AMD",
+        "Intel": "INTC",
+        "Qualcomm": "QCOM",
+        "Texas Instruments": "TXN",
+        "Micron Technology": "MU",
+        "Analog Devices": "ADI",
+        "Applied Materials": "AMAT",
+        "Lam Research": "LRCX",
+        "KLA Corp": "KLAC",
+        "NXP Semiconductors": "NXPI",
+        "Marvell Technology": "MRVL",
+        "Microchip Technology": "MCHP",
+        "ON Semiconductor": "ON",
+        "Arm Holdings": "ARM"
+    },
+
+    "Cybersecurity": {
+        "Palo Alto Networks": "PANW",
+        "Fortinet": "FTNT",
+        "CrowdStrike": "CRWD",
+        "Zscaler": "ZS",
+        "Cloudflare": "NET",
+        "Check Point": "CHKP",
+        "Okta": "OKTA",
+        "CyberArk": "CYBR",
+        "SentinelOne": "S",
+        "Tenable": "TENB",
+        "Rapid7": "RPD",
+        "Gen Digital (Norton)": "GEN",
+        "Varonis": "VRNS"
+    },
+
+    "Quantum Computing": {
+        "IonQ": "IONQ",
+        "Rigetti Computing": "RGTI",
+        "D-Wave Quantum": "QBTS",
+        "Quantum Computing Inc.": "QUBT",
+        "Arqit Quantum": "ARQQ",
+        "IBM (Major Player)": "IBM",
+        "Alphabet (Major Player)": "GOOGL",
+        "Honeywell (Major Player)": "HON",
+        "Microsoft (Major Player)": "MSFT",
+        "NVIDIA (Hardware)": "NVDA",
+        "FormFactor (Testing)": "FORM"
+    },
+
+    "Artificial Intelligence (Pure & Applied)": {
+        "C3.ai": "AI",
+        "Palantir": "PLTR",
+        "UiPath": "PATH",
+        "SoundHound AI": "SOUN",
+        "BigBear.ai": "BBAI",
+        "Upstart": "UPST",
+        "Lemonade": "LMND",
+        "Mobileye": "MBLY",
+        "Symbotic": "SYM",
+        "NVIDIA": "NVDA",
+        "Super Micro Computer": "SMCI"
+    },
+
+    "Communication Services & Media": {
+        "Alphabet (Google)": "GOOGL",
+        "Meta Platforms": "META",
+        "Netflix": "NFLX",
+        "Walt Disney": "DIS",
+        "Comcast": "CMCSA",
+        "Charter Communications": "CHTR",
+        "T-Mobile US": "TMUS",
+        "Verizon": "VZ",
+        "AT&T": "T",
+        "Warner Bros. Discovery": "WBD",
+        "Fox Corp": "FOXA",
+        "News Corp": "NWSA",
+        "Spotify": "SPOT",
+        "Live Nation": "LYV"
+    },
+
+    "E-Commerce & Internet Retail": {
+        "Amazon": "AMZN",
+        "Alibaba": "BABA",
+        "PDD Holdings (Temu)": "PDD",
+        "JD.com": "JD",
+        "MercadoLibre": "MELI",
+        "eBay": "EBAY",
+        "Etsy": "ETSY",
+        "Chewy": "CHWY",
+        "Wayfair": "W",
+        "Coupang": "CPNG",
+        "Sea Limited": "SE",
+        "Shopify": "SHOP"
+    },
+
+    "Fintech & Payments": {
+        "Visa": "V",
+        "Mastercard": "MA",
+        "PayPal": "PYPL",
+        "Fiserv": "FI",
+        "Fidelity National Info": "FIS",
+        "Global Payments": "GPN",
+        "Adyen": "ADYEY",
+        "SoFi Technologies": "SOFI",
+        "Affirm": "AFRM",
+        "Coinbase": "COIN",
+        "Robinhood": "HOOD",
+        "Toast": "TOST",
+        "Marqeta": "MQ"
+    },
+
+    "Traditional Financials (Banks & Asset Mgmt)": {
+        "JPMorgan Chase": "JPM",
+        "Bank of America": "BAC",
+        "Wells Fargo": "WFC",
+        "Citigroup": "C",
+        "Goldman Sachs": "GS",
+        "Morgan Stanley": "MS",
+        "BlackRock": "BLK",
+        "Blackstone": "BX",
+        "Berkshire Hathaway": "BRK-B",
+        "American Express": "AXP",
+        "Charles Schwab": "SCHW",
+        "US Bancorp": "USB",
+        "PNC Financial": "PNC",
+        "KKR & Co": "KKR",
+        "Apollo Global": "APO"
+    },
+
+    "Oil & Gas: Integrated & Exploration": {
+        "Exxon Mobil": "XOM",
+        "Chevron": "CVX",
+        "Shell": "SHEL",
+        "TotalEnergies": "TTE",
+        "ConocoPhillips": "COP",
+        "BP": "BP",
+        "EOG Resources": "EOG",
+        "Occidental Petroleum": "OXY",
+        "Devon Energy": "DVN",
+        "Diamondback Energy": "FANG",
+        "Valero Energy": "VLO",
+        "Phillips 66": "PSX"
+    },
+
+    "Oil Services & Infrastructure": {
+        "Schlumberger": "SLB",
+        "Halliburton": "HAL",
+        "Baker Hughes": "BKR",
+        "Kinder Morgan": "KMI",
+        "Williams Companies": "WMB",
+        "Enterprise Products": "EPD",
+        "Energy Transfer": "ET",
+        "Oneok": "OKE",
+        "Targa Resources": "TRGP",
+        "Cheniere Energy": "LNG"
+    },
+
+    "Clean Energy & Renewables": {
+        "NextEra Energy": "NEE",
+        "Enphase Energy": "ENPH",
+        "First Solar": "FSLR",
+        "SolarEdge": "SEDG",
+        "Plug Power": "PLUG",
+        "Bloom Energy": "BE",
+        "Sunrun": "RUN",
+        "Brookfield Renewable": "BEP",
+        "Clearway Energy": "CWEN",
+        "Vestas Wind Systems": "VWDRY",
+        "Ormat Technologies": "ORA"
+    },
+
+    "Utilities": {
+        "Duke Energy": "DUK",
+        "Southern Company": "SO",
+        "Dominion Energy": "D",
+        "American Electric Power": "AEP",
+        "Sempra": "SRE",
+        "Exelon": "EXC",
+        "Xcel Energy": "XEL",
+        "Consolidated Edison": "ED",
+        "Public Service Enterprise": "PEG",
+        "WEC Energy": "WEC",
+        "Eversource": "ES"
+    },
+
+    "Healthcare: Pharmaceuticals": {
+        "Johnson & Johnson": "JNJ",
+        "Eli Lilly": "LLY",
+        "Pfizer": "PFE",
+        "Merck": "MRK",
+        "AbbVie": "ABBV",
+        "Bristol-Myers Squibb": "BMY",
+        "Novartis": "NVS",
+        "AstraZeneca": "AZN",
+        "Sanofi": "SNY",
+        "Novo Nordisk": "NVO",
+        "GlaxoSmithKline": "GSK"
+    },
+
+    "Healthcare: Biotech & Genomics": {
+        "Amgen": "AMGN",
+        "Gilead Sciences": "GILD",
+        "Vertex Pharmaceuticals": "VRTX",
+        "Regeneron": "REGN",
+        "Moderna": "MRNA",
+        "BioNTech": "BNTX",
+        "Biogen": "BIIB",
+        "Illumina": "ILMN",
+        "CRISPR Therapeutics": "CRSP",
+        "Alnylam": "ALNY",
+        "Incyte": "INCY",
+        "BioMarin": "BMRN"
+    },
+
+    "Healthcare: Medical Devices & Equipment": {
+        "Thermo Fisher Scientific": "TMO",
+        "Abbott Laboratories": "ABT",
+        "Medtronic": "MDT",
+        "Intuitive Surgical": "ISRG",
+        "Stryker": "SYK",
+        "Becton Dickinson": "BDX",
+        "Boston Scientific": "BSX",
+        "Edwards Lifesciences": "EW",
+        "DexCom": "DXCM",
+        "Zimmer Biomet": "ZBH",
+        "GE HealthCare": "GEHC"
+    },
+
+    "Aerospace & Defense": {
+        "Boeing": "BA",
+        "Airbus": "EADSY",
+        "Lockheed Martin": "LMT",
+        "RTX Corp (Raytheon)": "RTX",
+        "Northrop Grumman": "NOC",
+        "General Dynamics": "GD",
+        "L3Harris": "LHX",
+        "TransDigm": "TDG",
+        "Howmet Aerospace": "HWM",
+        "Axon Enterprise": "AXON",
+        "Huntington Ingalls": "HII",
+        "Textron": "TXT"
+    },
+
+    "Industrials & Manufacturing": {
+        "General Electric": "GE",
+        "Caterpillar": "CAT",
+        "Deere & Company": "DE",
+        "Honeywell": "HON",
+        "3M": "MMM",
+        "Eaton": "ETN",
+        "Emerson Electric": "EMR",
+        "Parker-Hannifin": "PH",
+        "Illinois Tool Works": "ITW",
+        "Rockwell Automation": "ROK",
+        "Cummins": "CMI",
+        "PACCAR": "PCAR"
+    },
+
+    "Automotive & EV": {
+        "Tesla": "TSLA",
+        "Toyota": "TM",
+        "Ford": "F",
+        "General Motors": "GM",
+        "Honda": "HMC",
+        "Stellantis": "STLA",
+        "Ferrari": "RACE",
+        "Rivian": "RIVN",
+        "Lucid": "LCID",
+        "NIO": "NIO",
+        "Li Auto": "LI",
+        "XPeng": "XPEV",
+        "BYD": "BYDDY"
+    },
+
+    "Consumer Staples (Food & Bev)": {
+        "Coca-Cola": "KO",
+        "PepsiCo": "PEP",
+        "Procter & Gamble": "PG",
+        "Costco": "COST",
+        "Walmart": "WMT",
+        "Mondelez": "MDLZ",
+        "Philip Morris": "PM",
+        "Altria": "MO",
+        "Colgate-Palmolive": "CL",
+        "General Mills": "GIS",
+        "Kraft Heinz": "KHC",
+        "Hershey": "HSY",
+        "Constellation Brands": "STZ",
+        "Keurig Dr Pepper": "KDP"
+    },
+
+    "Consumer Discretionary (Retail & Leisure)": {
+        "Home Depot": "HD",
+        "Lowe's": "LOW",
+        "McDonald's": "MCD",
+        "Starbucks": "SBUX",
+        "Nike": "NKE",
+        "Target": "TGT",
+        "TJX Companies": "TJX",
+        "Lululemon": "LULU",
+        "Chipotle": "CMG",
+        "Marriott": "MAR",
+        "Hilton": "HLT",
+        "Royal Caribbean": "RCL",
+        "Carnival": "CCL",
+        "Booking Holdings": "BKNG"
+    },
+
+    "Materials & Mining": {
+        "Linde": "LIN",
+        "Sherwin-Williams": "SHW",
+        "Freeport-McMoRan": "FCX",
+        "Newmont": "NEM",
+        "Nucor": "NUE",
+        "Rio Tinto": "RIO",
+        "BHP Group": "BHP",
+        "Vale": "VALE",
+        "Barrick Mining Corporation": "B",
+        "Albemarle (Lithium)": "ALB",
+        "Dow Inc": "DOW",
+        "DuPont": "DD",
+        "Vulcan Materials": "VMC"
+    },
+
+    "Real Estate (REITs)": {
+        "Prologis (Industrial)": "PLD",
+        "American Tower": "AMT",
+        "Equinix (Data Center)": "EQIX",
+        "Crown Castle": "CCI",
+        "Public Storage": "PSA",
+        "Simon Property Group": "SPG",
+        "Realty Income": "O",
+        "Welltower": "WELL",
+        "Digital Realty": "DLR",
+        "VICI Properties": "VICI",
+        "AvalonBay": "AVB"
+    },
+
+    "Transportation & Logistics": {
+        "UPS": "UPS",
+        "FedEx": "FDX",
+        "Union Pacific": "UNP",
+        "CSX Corp": "CSX",
+        "Norfolk Southern": "NSC",
+        "Delta Air Lines": "DAL",
+        "United Airlines": "UAL",
+        "Southwest Airlines": "LUV",
+        "Old Dominion Freight": "ODFL",
+        "JB Hunt": "JBHT"
+    }
+}
