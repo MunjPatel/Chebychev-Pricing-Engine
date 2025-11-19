@@ -28,7 +28,13 @@ st.markdown(
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
     [data-testid="stMetricLabel"] { font-size: 13px; color: #9ca3af; font-weight: 500; }
-    [data-testid="stMetricValue"] { font-size: 26px !important; color: #f3f4f6; font-family: 'Source Code Pro', monospace; }
+    [data-testid="stMetricValue"] {
+        font-size: 20px !important; /* Reduced from 26px */
+        color: #f3f4f6;
+        font-family: 'Source Code Pro', monospace;
+        overflow-wrap: break-word; /* Ensures text wraps if it has to */
+        white-space: pre-wrap;     /* Allows wrapping */
+    }
     [data-testid="stSidebar"] { background-color: #111827; border-right: 1px solid #374151; }
     h1, h2, h3 { font-family: 'Inter', sans-serif; }
     </style>
@@ -156,7 +162,8 @@ if page == "Dashboard":
 
         # --- UI: Metrics Row ---
         st.markdown("---")
-        col1, col2, col3, col4 = st.columns(4)
+        # 1, 1, 1, 1.5 means the last column gets 1.5x the width of the others
+        col1, col2, col3, col4 = st.columns([1, 1, 1, 1.5])
         with col1: st.metric("Asset Price", f"${current_price:.2f}")
         with col2: st.metric("KL Divergence", f"{kl_div:.2e}")
         with col3: st.metric("Avg Vol Spread", f"{avg_vol_spread:.2f}%")
