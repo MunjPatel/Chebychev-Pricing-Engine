@@ -1,384 +1,3 @@
-# import streamlit as st
-# import json
-# import plotly.graph_objects as go
-# import pandas as pd
-# import numpy as np
-# from chebychev import ChebychevForecast
-# from datetime import datetime, timedelta
-# from scipy.stats import entropy, gaussian_kde  # <--- ADDED THIS IMPORT
-#
-# # -------------------------------
-# # 1. Page Configuration & CSS
-# # -------------------------------
-# st.set_page_config(
-#     layout="wide",
-#     page_title="Chebyshev Pricing Engine",
-#     page_icon="📊",
-#     initial_sidebar_state="expanded"
-# )
-#
-# # Professional Styling
-# st.markdown(
-#     """
-#     <style>
-#     /* Main App Background */
-#     .stApp {
-#         background-color: #0e1117;
-#     }
-#
-#     /* Metrics: Card Styling */
-#     div[data-testid="stMetric"] {
-#         background-color: #1f2937;
-#         border: 1px solid #374151;
-#         padding: 15px;
-#         border-radius: 8px;
-#         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-#     }
-#
-#     [data-testid="stMetricLabel"] {
-#         font-size: 13px;
-#         color: #9ca3af;
-#         font-weight: 500;
-#     }
-#
-#     [data-testid="stMetricValue"] {
-#         font-size: 26px !important;
-#         color: #f3f4f6;
-#         font-family: 'Source Code Pro', monospace;
-#     }
-#
-#     /* Sidebar Styling */
-#     [data-testid="stSidebar"] {
-#         background-color: #111827;
-#         border-right: 1px solid #374151;
-#     }
-#
-#     /* Headers */
-#     h1, h2, h3 {
-#         font-family: 'Inter', sans-serif;
-#     }
-#     </style>
-#     """,
-#     unsafe_allow_html=True
-# )
-#
-#
-# # -------------------------------
-# # 2. Data Loading
-# # -------------------------------
-# @st.cache_data
-# def load_tickers():
-#     try:
-#         with open("sector_tickers.json", "r") as tick:
-#             return json.load(tick)
-#     except FileNotFoundError:
-#         return {}
-#
-#
-# tickers = load_tickers()
-#
-# def calculate_kl_divergence(p, q):
-#     """
-#     Calculates KL Divergence D(P || Q).
-#     Normalize inputs to sum to 1 to treat them as probability distributions.
-#     """
-#     p_norm = p / np.sum(p)
-#     q_norm = q / np.sum(q)
-#     return entropy(p_norm, q_norm)
-#
-# # -------------------------------
-# # 3. Navigation
-# # -------------------------------
-# page = st.sidebar.radio("📍 Navigation", ["Mathematical Framework", "Dashboard"])
-#
-# # ==============================================================
-# # PAGE 1: DASHBOARD
-# # ==============================================================
-# if page == "Dashboard":
-#     st.title("📊 Chebyshev Price Forecast")
-#
-#     # --- Sidebar ---
-#     st.sidebar.markdown("---")
-#     st.sidebar.header("⚙️ Asset Configuration")
-#
-#     if tickers:
-#         sector = st.sidebar.selectbox("Sector", list(tickers.keys()))
-#         company_dict = tickers[sector]
-#         company_name = st.sidebar.selectbox("Asset", list(company_dict.keys()))
-#         ticker_symbol = company_dict[company_name]
-#
-#         st.sidebar.markdown("---")
-#         st.sidebar.caption(f"🔒 Model Parameter: **k = 10** (Fixed)")
-#
-#         time_view = st.sidebar.radio(
-#             "Timeframe",
-#             ["Last Trading Session", "Full History"],
-#             index=0
-#         )
-#
-#         run_button = st.sidebar.button("⚡ Run Quant Engine", type="primary")
-#
-#         # --- Main Execution ---
-#         if run_button:
-#             with st.spinner(f"Calculating Chebyshev bounds for {ticker_symbol}..."):
-#                 try:
-#                     # Run Model
-#                     model = ChebychevForecast(ticker=ticker_symbol, k=10)
-#                     # Ignore the entropy returned by the class, we calculate KL locally
-#                     forecast_data, _ = model._forecast()
-#
-#                     # Filter Data
-#                     if time_view == "Last Trading Session":
-#                         last_date = forecast_data.index[-1].date()
-#                         plot_data = forecast_data[forecast_data.index.date == last_date]
-#                     else:
-#                         plot_data = forecast_data
-#
-#                     # --- METRIC CALCULATIONS ---
-#
-#                     # 1. KL Divergence (Actual vs Forecast Mean)
-#                     # This measures how much the "Forecast" distribution diverges from "Actual"
-#                     kl_div = calculate_kl_divergence(plot_data['Close'], plot_data['close_avg'])
-#
-#                     # 2. Average Price Spread (Dynamic)
-#                     # We calculate the mean spread percentage over the *visible* period
-#                     # This solves the issue of the spread looking "constant"
-#                     plot_data['spread_pct'] = ((plot_data['close_max'] - plot_data['close_min']) / plot_data[
-#                         'Close']) * 100
-#                     avg_vol_spread = plot_data['spread_pct'].mean()
-#
-#                     # 3. Last Data Points
-#                     last_row = plot_data.iloc[-1]
-#                     current_price = last_row['Close']
-#                     upper_b = last_row['close_max']
-#                     lower_b = last_row['close_min']
-#
-#                     # 4. Status Logic
-#                     if current_price > upper_b:
-#                         status = "⚠️ OVERBOUGHT"
-#                         status_color = "red"
-#                     elif current_price < lower_b:
-#                         status = "⚠️ OVERSOLD"
-#                         status_color = "red"
-#                     else:
-#                         status = "✅ STABLE"
-#                         status_color = "green"
-#
-#                     # --- UI: Metrics Row ---
-#                     st.markdown("---")
-#
-#                     # Adjusted columns to fit everything clearly
-#                     col1, col2, col3, col4 = st.columns(4)
-#
-#                     with col1:
-#                         st.metric("Asset Price", f"${current_price:.2f}")
-#                     with col2:
-#                         st.metric("KL Divergence", f"{kl_div:.2e}")
-#                     with col3:
-#                         # Now showing AVG spread over the selected period
-#                         st.metric("Avg Vol Spread", f"{avg_vol_spread:.2f}%")
-#                     with col4:
-#                         # VISIBLE PRICE RANGE
-#                         st.metric("99% Bounds", f"${lower_b:.2f} — ${upper_b:.2f}")
-#
-#                     st.markdown(f"**Market Regime:** :{status_color}[**{status}**]")
-#                     st.caption("Price is oscillating within the Chebyshev confidence interval.")
-#
-#                     # --- UI: Visualizations (Tabs) ---
-#                     st.markdown("###")
-#                     tab_ts, tab_dist = st.tabs(["📈 Time Series Analysis", "🔔 Distribution Analysis (KDE)"])
-#
-#                     # --- TAB 1: TIME SERIES ---
-#                     with tab_ts:
-#                         fig = go.Figure()
-#
-#                         # Bounds
-#                         fig.add_trace(go.Scatter(
-#                             x=plot_data.index, y=plot_data['close_min'],
-#                             mode="lines", line=dict(width=0), showlegend=False, hoverinfo='skip'
-#                         ))
-#                         fig.add_trace(go.Scatter(
-#                             x=plot_data.index, y=plot_data['close_max'],
-#                             mode="lines", line=dict(width=0),
-#                             fill='tonexty', fillcolor='rgba(46, 204, 113, 0.15)',
-#                             name="99% Confidence"
-#                         ))
-#
-#                         # Mean
-#                         fig.add_trace(go.Scatter(
-#                             x=plot_data.index, y=plot_data['close_avg'],
-#                             mode="lines", line=dict(color='orange', dash='dash', width=1),
-#                             name="Forecast Mean"
-#                         ))
-#
-#                         # Actual
-#                         fig.add_trace(go.Scatter(
-#                             x=plot_data.index, y=plot_data['Close'],
-#                             mode="lines", line=dict(color='#F8FAFC', width=2),
-#                             name="Actual Price"
-#                         ))
-#
-#                         # Anomalies
-#                         outliers = plot_data[~plot_data['in_range']]
-#                         if not outliers.empty:
-#                             fig.add_trace(go.Scatter(
-#                                 x=outliers.index, y=outliers['Close'],
-#                                 mode="markers", marker=dict(color='#EF4444', size=6, symbol='x'),
-#                                 name="Breach"
-#                             ))
-#
-#                         fig.update_layout(
-#                             height=500,
-#                             margin=dict(l=20, r=20, t=30, b=20),
-#                             paper_bgcolor='rgba(0,0,0,0)',
-#                             plot_bgcolor='rgba(0,0,0,0)',
-#                             xaxis=dict(showgrid=False),
-#                             yaxis=dict(showgrid=True, gridcolor='#374151'),
-#                             hovermode="x unified",
-#                             legend=dict(orientation="h", y=1.05, xanchor="right", x=1)
-#                         )
-#                         st.plotly_chart(fig, use_container_width=True)
-#
-#                     # --- TAB 2: DISTRIBUTION (KDE) ---
-#                     with tab_dist:
-#                         st.markdown("##### Kernel Density Estimation (Actual vs. Forecast)")
-#
-#                         # Calculate KDEs
-#                         # We drop NA to ensure clean calculation
-#                         clean_close = plot_data['Close'].dropna()
-#                         clean_avg = plot_data['close_avg'].dropna()
-#
-#                         kde_close = gaussian_kde(clean_close)
-#                         kde_avg = gaussian_kde(clean_avg)
-#
-#                         # Create Grid
-#                         x_range = np.linspace(min(clean_close.min(), clean_avg.min()),
-#                                               max(clean_close.max(), clean_avg.max()), 200)
-#
-#                         fig_kde = go.Figure()
-#
-#                         # Plot Actual KDE
-#                         fig_kde.add_trace(go.Scatter(
-#                             x=x_range, y=kde_close(x_range),
-#                             mode='lines', fill='tozeroy',
-#                             name='Actual Price Distribution',
-#                             line=dict(color='#3b82f6')
-#                         ))
-#
-#                         # Plot Forecast KDE
-#                         fig_kde.add_trace(go.Scatter(
-#                             x=x_range, y=kde_avg(x_range),
-#                             mode='lines', fill='tozeroy',
-#                             name='Forecast Mean Distribution',
-#                             line=dict(color='orange', dash='dot'),
-#                             fillcolor='rgba(255, 165, 0, 0.2)'
-#                         ))
-#
-#                         fig_kde.update_layout(
-#                             height=500,
-#                             margin=dict(l=20, r=20, t=30, b=20),
-#                             paper_bgcolor='rgba(0,0,0,0)',
-#                             plot_bgcolor='rgba(0,0,0,0)',
-#                             xaxis_title="Price ($)",
-#                             yaxis_title="Density",
-#                             xaxis=dict(showgrid=False),
-#                             yaxis=dict(showgrid=True, gridcolor='#374151'),
-#                             legend=dict(orientation="h", y=1.05, xanchor="right", x=1)
-#                         )
-#
-#                         st.plotly_chart(fig_kde, use_container_width=True)
-#
-#                     # --- Data Export ---
-#                     csv = plot_data.to_csv().encode('utf-8')
-#                     st.download_button(
-#                         label="📥 Download CSV",
-#                         data=csv,
-#                         file_name=f"{ticker_symbol}_chebyshev_data.csv",
-#                         mime="text/csv"
-#                     )
-#
-#                 except Exception as e:
-#                     st.error(f"Computation Error: {e}")
-#     else:
-#         st.warning("Please upload 'sector_tickers.json' to proceed.")
-#
-# # ==============================================================
-# # PAGE 2: MATH FRAMEWORK
-# # ==============================================================
-# elif page == "Mathematical Framework":
-#     st.title("📘 Derivation of Chebyshev Price Bounds")
-#
-#     st.markdown("### 1. The Log-Normal Assumption")
-#     st.markdown(
-#         r"""
-#         Financial prices ($P$) are strictly positive and often skewed. We transform them into **log-space** to approximate a symmetric distribution suitable for moment analysis.
-#
-#         Let $L = \ln(P)$, where:
-#         * $\mu_L = E[L]$ (Mean of log-price)
-#         * $\sigma_L = \sqrt{\text{Var}(L)}$ (Std Dev of log-price)
-#         """
-#     )
-#
-#     st.markdown("---")
-#
-#     st.markdown("### 2. Chebyshev's Inequality")
-#     st.markdown(
-#         r"""
-#         Chebyshev's inequality states that for *any* probability distribution (with finite variance), the probability of a value lying more than $k$ standard deviations from the mean is at most $1/k^2$.
-#
-#         $$
-#         P(|L - \mu_L| \ge k\sigma_L) \le \frac{1}{k^2}
-#         $$
-#
-#         Conversely, the probability of remaining **within** $k$ standard deviations is:
-#
-#         $$
-#         P(|L - \mu_L| \le k\sigma_L) \ge 1 - \frac{1}{k^2}
-#         $$
-#         """
-#     )
-#
-#     st.markdown("---")
-#
-#     st.markdown("### 3. Algebraic Derivation of Price Bounds")
-#     st.markdown("We solve the inequality for the price $P$ in four steps:")
-#
-#     col_math_L, col_math_R = st.columns([2, 1.5])
-#
-#     with col_math_L:
-#         st.markdown("**Step A: Expand the Modulus**")
-#         st.latex(r"-k\sigma_L \le L - \mu_L \le k\sigma_L")
-#
-#         st.markdown("**Step B: Isolate the Log-Variable ($L$)**")
-#         st.latex(r"\mu_L - k\sigma_L \le L \le \mu_L + k\sigma_L")
-#
-#         st.markdown("**Step C: Substitute Log Definition ($L = \ln P$)**")
-#         st.latex(r"\mu_L - k\sigma_L \le \ln P \le \mu_L + k\sigma_L")
-#
-#         st.markdown("**Step D: Exponentiate to find Price ($P$)**")
-#         st.latex(r"\boxed{e^{\mu_L - k\sigma_L} \le P \le e^{\mu_L + k\sigma_L}}")
-#
-#     with col_math_R:
-#         st.info(
-#             """
-#             **Why is this useful?**
-#
-#             Unlike Bollinger Bands, the price bounds derived here do not require the data to be Normally distributed.
-#
-#             They provide a "distribution-free" upper and lower bound on the price of the asset.
-#             """
-#         )
-#         st.markdown(
-#             """
-#             | k | Confidence Interval ($1 - 1/k^2$) |
-#             | :---: | :--- |
-#             | 2 | 75.00% |
-#             | 5 | 96.00% |
-#             | **10** | **99.00% (Black Swan Safe)** |
-#             """
-#         )
-#         st.caption("In this model, we fix k=10 to capture extreme market events.")
-
 import streamlit as st
 import json
 import plotly.graph_objects as go
@@ -621,62 +240,132 @@ if page == "Dashboard":
                         )
                         st.plotly_chart(fig, use_container_width=True)
 
-                    # --- TAB 2: DISTRIBUTION (KDE) ---
+                    # --- TAB 2: DISTRIBUTION (KDE) & BREACH ANALYSIS ---
                     with tab_dist:
-                        st.markdown("##### Kernel Density Estimation (Actual vs. Forecast)")
-
-                        # Calculate KDEs
-                        clean_close = plot_data['Close'].dropna()
-                        clean_avg = plot_data['close_avg'].dropna()
-
-                        kde_close = gaussian_kde(clean_close)
-                        kde_avg = gaussian_kde(clean_avg)
-
-                        # Create Grid
-                        x_range = np.linspace(min(clean_close.min(), clean_avg.min()),
-                                              max(clean_close.max(), clean_avg.max()), 200)
-
-                        fig_kde = go.Figure()
-
-                        # Plot Actual KDE
-                        fig_kde.add_trace(go.Scatter(
-                            x=x_range, y=kde_close(x_range),
-                            mode='lines', fill='tozeroy',
-                            name='Actual Price Distribution',
-                            line=dict(color='#3b82f6')
-                        ))
-
-                        # Plot Forecast KDE
-                        fig_kde.add_trace(go.Scatter(
-                            x=x_range, y=kde_avg(x_range),
-                            mode='lines', fill='tozeroy',
-                            name='Forecast Mean Distribution',
-                            line=dict(color='orange', dash='dot'),
-                            fillcolor='rgba(255, 165, 0, 0.2)'
-                        ))
-
-                        fig_kde.update_layout(
-                            height=500,
-                            margin=dict(l=20, r=20, t=30, b=20),
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            plot_bgcolor='rgba(0,0,0,0)',
-                            xaxis_title="Price ($)",
-                            yaxis_title="Density",
-                            xaxis=dict(showgrid=False),
-                            yaxis=dict(showgrid=True, gridcolor='#374151'),
-                            legend=dict(orientation="h", y=1.05, xanchor="right", x=1)
+                        # 1. Identify Outliers & Calculate Deviation
+                        outliers = plot_data[~plot_data['in_range']].copy()
+                        
+                        # Calculate how much the price deviated ($ amount)
+                        # If Close > Max, deviation is positive. If Close < Min, deviation is positive (magnitude).
+                        outliers['deviation_amt'] = np.where(
+                            outliers['Close'] > outliers['close_max'],
+                            outliers['Close'] - outliers['close_max'],
+                            outliers['close_min'] - outliers['Close']
                         )
+                        
+                        # Create Layout Columns
+                        col_kde, col_breach = st.columns([1.6, 1])
+                        
+                        # --- LEFT COL: KDE PLOT ---
+                        with col_kde:
+                            st.markdown("##### 🔔 Probability Density")
+                            
+                            # Calculate KDEs (Same as before)
+                            clean_close = plot_data['Close'].dropna()
+                            clean_avg = plot_data['close_avg'].dropna()
+                            kde_close = gaussian_kde(clean_close)
+                            kde_avg = gaussian_kde(clean_avg)
+                            
+                            x_range = np.linspace(min(clean_close.min(), clean_avg.min()),
+                                                  max(clean_close.max(), clean_avg.max()), 200)
 
-                        st.plotly_chart(fig_kde, width='stretch')
+                            fig_kde = go.Figure()
 
-                    # --- Data Export ---
-                    csv = plot_data.to_csv().encode('utf-8')
-                    st.download_button(
-                        label="📥 Download CSV",
-                        data=csv,
-                        file_name=f"{ticker_symbol}_chebyshev_data.csv",
-                        mime="text/csv"
-                    )
+                            # Forecast Distribution
+                            fig_kde.add_trace(go.Scatter(
+                                x=x_range, y=kde_avg(x_range),
+                                mode='lines', fill='tozeroy',
+                                name='Forecast Model',
+                                line=dict(color='orange', dash='dot', width=1),
+                                fillcolor='rgba(255, 165, 0, 0.1)'
+                            ))
+
+                            # Actual Distribution
+                            fig_kde.add_trace(go.Scatter(
+                                x=x_range, y=kde_close(x_range),
+                                mode='lines', fill='tozeroy',
+                                name='Actual Price',
+                                line=dict(color='#3b82f6', width=2),
+                                fillcolor='rgba(59, 130, 246, 0.1)' 
+                            ))
+
+                            # --- NEW: Add Rug Plot for Breaches ---
+                            # This adds red tick marks on the x-axis where breaches occurred
+                            if not outliers.empty:
+                                fig_kde.add_trace(go.Scatter(
+                                    x=outliers['Close'],
+                                    y=[0] * len(outliers), # Plot at the bottom
+                                    mode='markers',
+                                    name='Breach Event',
+                                    marker=dict(symbol='line-ns-open', color='red', size=10, line=dict(width=2)),
+                                    hovertemplate="Breach Price: $%{x:.2f}<extra></extra>"
+                                ))
+
+                            fig_kde.update_layout(
+                                height=450,
+                                margin=dict(l=20, r=20, t=30, b=20),
+                                paper_bgcolor='rgba(0,0,0,0)',
+                                plot_bgcolor='rgba(0,0,0,0)',
+                                xaxis_title="Price ($)",
+                                yaxis_title="Density",
+                                xaxis=dict(showgrid=False, gridcolor='#374151'),
+                                yaxis=dict(showgrid=True, gridcolor='#374151'),
+                                legend=dict(orientation="h", y=1.05, xanchor="right", x=1)
+                            )
+                            st.plotly_chart(fig_kde, use_container_width=True)
+
+                        # --- RIGHT COL: BREACH BAR PLOT & DATA ---
+                        with col_breach:
+                            st.markdown("##### ⚠️ Breach Severity Analysis")
+                            
+                            if outliers.empty:
+                                st.success("No Chebyshev breaches detected in this timeframe.")
+                                st.caption("Price remained 100% within the k=10 confidence interval.")
+                            else:
+                                # 1. Bar Plot of Magnitude
+                                fig_bar = go.Figure()
+                                fig_bar.add_trace(go.Bar(
+                                    x=outliers.index,
+                                    y=outliers['deviation_amt'],
+                                    marker_color='#EF4444',
+                                    name='Deviation ($)'
+                                ))
+                                
+                                fig_bar.update_layout(
+                                    title="Magnitude of Breaches ($)",
+                                    title_font_size=12,
+                                    height=250,
+                                    margin=dict(l=20, r=20, t=40, b=20),
+                                    paper_bgcolor='rgba(0,0,0,0)',
+                                    plot_bgcolor='rgba(0,0,0,0)',
+                                    xaxis=dict(showgrid=False, title=None),
+                                    yaxis=dict(showgrid=True, gridcolor='#374151', title="Excess ($)"),
+                                    showlegend=False
+                                )
+                                st.plotly_chart(fig_bar, use_container_width=True)
+                                
+                                # 2. Data Table & Download
+                                st.markdown("###### Breach Log")
+                                
+                                # Select specific columns for the report
+                                export_df = outliers[['Close', 'close_min', 'close_max', 'deviation_amt']].copy()
+                                export_df.columns = ['Price', 'Lower Bound', 'Upper Bound', 'Deviation ($)']
+                                
+                                st.dataframe(
+                                    export_df.style.format("{:.2f}"), 
+                                    height=150, 
+                                    use_container_width=True
+                                )
+                                
+                                # Download Button
+                                csv_breach = export_df.to_csv().encode('utf-8')
+                                st.download_button(
+                                    label="📥 Download Breach Report",
+                                    data=csv_breach,
+                                    file_name=f"{ticker_symbol}_breaches.csv",
+                                    mime="text/csv",
+                                    type="primary"
+                                )
 
                 except Exception as e:
                     st.error(f"Computation Error: {e}")
