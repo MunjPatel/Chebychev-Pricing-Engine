@@ -198,7 +198,7 @@ if page == "Dashboard":
         # TAB 2: DISTRIBUTION
         # ==================================================
         with tabs[1]:
-            st.markdown("##### Kernel Density Estimation")
+            st.markdown(f"##### Kernel Density Estimation for {ticker_symbol}")
             clean_close = plot_data['Close'].dropna()
             clean_avg = plot_data['close_avg'].dropna()
             kde_close = gaussian_kde(clean_close)
@@ -216,7 +216,7 @@ if page == "Dashboard":
         # TAB 3: CORRELATION MAP
         # ==================================================
         with tabs[2]:
-            st.markdown("##### Feature Correlation Matrix")
+            st.markdown(f"##### Feature Correlation Matrix for {ticker_symbol}")
             
             # Select only numeric columns relevant for analysis
             numeric_cols = ['Close', 'close_min', 'close_max', 'close_avg', 'price_std', 'price_mu']
@@ -252,7 +252,7 @@ if page == "Dashboard":
         # ==================================================
         if has_breaches:
             with tabs[3]:
-                st.markdown("##### ⚠️ Breach Severity Analysis")
+                st.markdown(f"##### ⚠️ Breach Severity Analysis for {ticker_symbol}")
                 
                 # Calculate deviation
                 outliers['deviation_amt'] = np.where(
