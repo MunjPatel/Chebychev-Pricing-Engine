@@ -62,7 +62,7 @@ if 'ticker_symbol' not in st.session_state:
 # 3. Sidebar & Navigation
 # -------------------------------
 tickers = load_tickers()
-page = st.sidebar.radio("📍 Navigation", ["Dashboard", "Mathematical Framework"])
+page = st.sidebar.radio("📍 Navigation", ["Mathematical Framework", "Dashboard"])
 
 if page == "Dashboard":
     st.markdown("<h1 style='text-align: center; color: white;'>📊 Chebyshev Price Forecast</h1>", unsafe_allow_html=True)
