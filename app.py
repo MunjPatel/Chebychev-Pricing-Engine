@@ -91,7 +91,7 @@ def generate_ai_memo(api_key, ticker, price, lower, upper, status, outliers, vol
         """
         
         completion = client.chat.completions.create(
-            model="openai/gpt-oss-20b",
+            model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
             max_tokens=200,
