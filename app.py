@@ -6,6 +6,11 @@ import numpy as np
 from chebychev import ChebychevForecast
 from scipy.stats import entropy, gaussian_kde
 from datetime import datetime, timedelta
+import os
+
+# --- NEW IMPORT FOR AI ---
+# Ensure you run: pip install groq
+from groq import Groq 
 
 # -------------------------------
 # 1. Page Configuration & CSS
@@ -29,14 +34,21 @@ st.markdown(
     }
     [data-testid="stMetricLabel"] { font-size: 13px; color: #9ca3af; font-weight: 500; }
     [data-testid="stMetricValue"] {
-        font-size: 20px !important; /* Reduced from 26px */
+        font-size: 20px !important; /* Optimized for Bounds display */
         color: #f3f4f6;
         font-family: 'Source Code Pro', monospace;
-        overflow-wrap: break-word; /* Ensures text wraps if it has to */
-        white-space: pre-wrap;     /* Allows wrapping */
+        overflow-wrap: break-word;
+        white-space: pre-wrap;
     }
     [data-testid="stSidebar"] { background-color: #111827; border-right: 1px solid #374151; }
     h1, h2, h3 { font-family: 'Inter', sans-serif; }
+    
+    /* AI Box Styling */
+    .stInfo {
+        background-color: #1e293b;
+        border: 1px solid #3b82f6;
+        color: #e2e8f0;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -58,7 +70,40 @@ def calculate_kl_divergence(p, q):
     q_norm = q / np.sum(q)
     return entropy(p_norm, q_norm)
 
-# Initialize Session State to prevent reset on Download interaction
+# --- AI ANALYST FUNCTION ---
+def generate_ai_memo(api_key, ticker, price, lower, upper, status, outliers, volatility):
+    if not api_key:
+        return "⚠️ API Key missing. Please enter it in the sidebar or secrets."
+    
+    try:
+        client = Groq(api_key=api_key)
+        
+        prompt = f"""
+        You are a Senior Quantitative Analyst at Insight Partners. 
+        Analyze this data for {ticker}:
+        - Price: ${price:.2f}
+        - Chebyshev Bounds (k=10): ${lower:.2f} - ${upper:.2f}
+        - Regime: {status}
+        - Volatility Spread: {volatility:.2f}%
+        - Anomalies Detected: {len(outliers)}
+        
+        Write a "Flash Note" (max 100 words) for the Portfolio Manager.
+        1. Interpret the regime (Stable vs Overbought/Oversold).
+        2. Recommend an action (Hold, Mean Reversion Trade, or Hedge).
+        3. Be concise and professional.
+        """
+        
+        completion = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=200,
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        return f"AI Error: {e}"
+
+# Initialize Session State
 if 'analysis_data' not in st.session_state:
     st.session_state['analysis_data'] = None
 if 'ticker_symbol' not in st.session_state:
@@ -68,7 +113,7 @@ if 'ticker_symbol' not in st.session_state:
 # 3. Sidebar & Navigation
 # -------------------------------
 tickers = load_tickers()
-page = st.sidebar.radio("📍 Navigation", ["Mathematical Framework", "Dashboard"])
+page = st.sidebar.radio("📍 Navigation", ["Dashboard", "Mathematical Framework"])
 
 if page == "Dashboard":
     st.markdown("<h1 style='text-align: center; color: white;'>📊 Chebyshev Price Forecast</h1>", unsafe_allow_html=True)
@@ -76,6 +121,11 @@ if page == "Dashboard":
     # --- Sidebar Inputs ---
     st.sidebar.markdown("---")
     st.sidebar.header("⚙️ Asset Configuration")
+
+    # --- API KEY LOGIC (Secrets -> Sidebar Fallback) ---
+    api_key = st.secrets.get("GROQ_API_KEY")
+    if not api_key:
+        api_key = st.sidebar.text_input("🔑 Groq API Key (for AI)", type="password")
 
     if tickers:
         sector = st.sidebar.selectbox("Sector", list(tickers.keys()))
@@ -93,7 +143,6 @@ if page == "Dashboard":
         
         st.sidebar.markdown("###")
         
-        # --- Controls ---
         col_run, col_reset = st.sidebar.columns(2)
         
         with col_run:
@@ -115,7 +164,6 @@ if page == "Dashboard":
                     model = ChebychevForecast(ticker=ticker_symbol, k=10)
                     forecast_data, _ = model._forecast()
                     
-                    # Store in Session State
                     st.session_state['analysis_data'] = forecast_data
                     st.session_state['ticker_symbol'] = ticker_symbol
                 except Exception as e:
@@ -124,14 +172,12 @@ if page == "Dashboard":
     else:
         st.warning("Please upload 'sector_tickers.json' to proceed.")
 
-    # --- Main Dashboard Render (Only if data exists in State) ---
+    # --- Main Dashboard Render ---
     if st.session_state['analysis_data'] is not None:
         
-        # Retrieve from state
         full_data = st.session_state['analysis_data']
         current_ticker = st.session_state['ticker_symbol']
 
-        # Filter Data based on view (This can be dynamic without re-running calculation)
         if time_view == "Last Trading Session":
             last_date = full_data.index[-1].date()
             plot_data = full_data[full_data.index.date == last_date].copy()
@@ -149,7 +195,6 @@ if page == "Dashboard":
         upper_b = last_row['close_max']
         lower_b = last_row['close_min']
 
-        # Status Logic
         if current_price > upper_b:
             status = "⚠️ OVERBOUGHT"
             status_color = "red"
@@ -162,7 +207,7 @@ if page == "Dashboard":
 
         # --- UI: Metrics Row ---
         st.markdown("---")
-        # 1, 1, 1, 1.5 means the last column gets 1.5x the width of the others
+        # Fixed Column Ratio for Bounds Visibility
         col1, col2, col3, col4 = st.columns([1, 1, 1, 1.5])
         with col1: st.metric("Asset Price", f"${current_price:.2f}")
         with col2: st.metric("KL Divergence", f"{kl_div:.2e}")
@@ -174,8 +219,23 @@ if page == "Dashboard":
         outliers = plot_data[~plot_data['in_range']].copy()
         has_breaches = not outliers.empty
 
+        # --- AI ANALYST SECTION ---
+        st.markdown("###")
+        if st.button("🤖 Generate AI Analyst Memo"):
+            with st.spinner("Consulting AI Model..."):
+                memo = generate_ai_memo(
+                    api_key=api_key,
+                    ticker=current_ticker,
+                    price=current_price,
+                    lower=lower_b,
+                    upper=upper_b,
+                    status=status,
+                    outliers=outliers,
+                    volatility=avg_vol_spread
+                )
+                st.info(f"**AI Flash Note:**\n\n{memo}")
+
         # --- DYNAMIC TABS ---
-        # Define tabs dynamically based on whether breaches exist
         tab_names = ["📈 Time Series", "🔔 Distribution (KDE)", "📉 Correlation Matrix"]
         if has_breaches:
             tab_names.append("⚠️ Breach Analysis")
@@ -187,14 +247,11 @@ if page == "Dashboard":
         # ==================================================
         with tabs[0]:
             fig = go.Figure()
-            # Bounds
             fig.add_trace(go.Scatter(x=plot_data.index, y=plot_data['close_min'], mode="lines", line=dict(width=0), showlegend=False, hoverinfo='skip'))
             fig.add_trace(go.Scatter(x=plot_data.index, y=plot_data['close_max'], mode="lines", line=dict(width=0), fill='tonexty', fillcolor='rgba(46, 204, 113, 0.15)', name="99% Confidence"))
-            # Mean & Actual
             fig.add_trace(go.Scatter(x=plot_data.index, y=plot_data['close_avg'], mode="lines", line=dict(color='orange', dash='dash', width=1), name="Forecast Mean"))
             fig.add_trace(go.Scatter(x=plot_data.index, y=plot_data['Close'], mode="lines", line=dict(color='#F8FAFC', width=2), name="Actual Price"))
             
-            # Add breach markers if they exist
             if has_breaches:
                 fig.add_trace(go.Scatter(x=outliers.index, y=outliers['Close'], mode="markers", marker=dict(color='#EF4444', size=6, symbol='x'), name="Breach"))
 
@@ -224,32 +281,17 @@ if page == "Dashboard":
         # ==================================================
         with tabs[2]:
             st.markdown(f"##### Feature Correlation Matrix for {ticker_symbol}")
-            
-            # Select only numeric columns relevant for analysis
             numeric_cols = ['Close', 'close_min', 'close_max', 'close_avg', 'price_std', 'price_mu']
-            # Ensure these columns actually exist in the dataframe
             available_cols = [c for c in numeric_cols if c in plot_data.columns]
             
             if len(available_cols) > 1:
                 corr_matrix = plot_data[available_cols].corr()
-                
                 fig_corr = go.Figure(data=go.Heatmap(
-                    z=corr_matrix.values,
-                    x=corr_matrix.columns,
-                    y=corr_matrix.index,
-                    colorscale='RdBu_r',  # Red = High Corr, Blue = Inverse
-                    zmin=-1, zmax=1,
-                    text=corr_matrix.values.round(2),
-                    texttemplate="%{text}",
-                    showscale=True
+                    z=corr_matrix.values, x=corr_matrix.columns, y=corr_matrix.index,
+                    colorscale='RdBu_r', zmin=-1, zmax=1,
+                    text=corr_matrix.values.round(2), texttemplate="%{text}", showscale=True
                 ))
-                
-                fig_corr.update_layout(
-                    height=500,
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    title="Pearson Correlation Coefficients"
-                )
+                fig_corr.update_layout(height=500, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', title="Pearson Correlation Coefficients")
                 st.plotly_chart(fig_corr, use_container_width=True)
             else:
                 st.warning("Not enough numeric data available for correlation analysis.")
@@ -260,8 +302,6 @@ if page == "Dashboard":
         if has_breaches:
             with tabs[3]:
                 st.markdown(f"##### ⚠️ Breach Severity Analysis for {ticker_symbol}")
-                
-                # Calculate deviation
                 outliers['deviation_amt'] = np.where(
                     outliers['Close'] > outliers['close_max'],
                     outliers['Close'] - outliers['close_max'],
@@ -269,15 +309,9 @@ if page == "Dashboard":
                 )
                 
                 col_b_plot, col_b_data = st.columns([2, 1])
-                
                 with col_b_plot:
                     fig_bar = go.Figure()
-                    fig_bar.add_trace(go.Bar(
-                        x=outliers.index,
-                        y=outliers['deviation_amt'],
-                        marker_color='#EF4444',
-                        name='Deviation ($)'
-                    ))
+                    fig_bar.add_trace(go.Bar(x=outliers.index, y=outliers['deviation_amt'], marker_color='#EF4444', name='Deviation ($)'))
                     fig_bar.update_layout(title="Magnitude of Breaches ($)", height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', yaxis=dict(showgrid=True, gridcolor='#374151'), showlegend=False)
                     st.plotly_chart(fig_bar, use_container_width=True)
                     
@@ -294,10 +328,10 @@ if page == "Dashboard":
                         file_name=f"{current_ticker}_breaches.csv",
                         mime="text/csv",
                         type="primary",
-                        key="breach_dl_btn" # Unique key
+                        key="breach_dl_btn"
                     )
 
-        # --- General Data Export (Always visible) ---
+        # --- General Data Export ---
         st.markdown("###")
         csv_full = plot_data.to_csv().encode('utf-8')
         st.download_button(
