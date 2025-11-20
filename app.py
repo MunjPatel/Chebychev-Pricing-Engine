@@ -24,6 +24,8 @@ st.markdown(
     """
     <style>
     .stApp { background-color: #0e1117; }
+    
+    /* Metrics Styling */
     div[data-testid="stMetric"] {
         background-color: #1f2937; border: 1px solid #374151;
         padding: 15px; border-radius: 8px;
@@ -31,20 +33,38 @@ st.markdown(
     }
     [data-testid="stMetricLabel"] { font-size: 13px; color: #9ca3af; font-weight: 500; }
     [data-testid="stMetricValue"] {
-        font-size: 20px !important; /* Optimized for Bounds display */
+        font-size: 20px !important; 
         color: #f3f4f6;
         font-family: 'Source Code Pro', monospace;
         overflow-wrap: break-word;
         white-space: pre-wrap;
     }
+    
+    /* Sidebar */
     [data-testid="stSidebar"] { background-color: #111827; border-right: 1px solid #374151; }
     h1, h2, h3 { font-family: 'Inter', sans-serif; }
     
-    /* AI Box Styling */
-    .stInfo {
-        background-color: #1e293b;
-        border: 1px solid #3b82f6;
-        color: #e2e8f0;
+    /* CUSTOM AI CARD STYLING (Fixes the format issue) */
+    .ai-card {
+        background-color: #1f2937; 
+        border: 1px solid #374151;
+        border-left: 5px solid #3b82f6; /* Blue Accent Line */
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 10px;
+        color: #f3f4f6; /* Light Text */
+        font-size: 16px;
+        line-height: 1.6;
+        font-family: 'Inter', sans-serif;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+    .ai-header {
+        font-weight: 600;
+        color: #60a5fa;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     </style>
     """,
@@ -67,11 +87,15 @@ def calculate_kl_divergence(p, q):
     q_norm = q / np.sum(q)
     return entropy(p_norm, q_norm)
 
-# --- AI ANALYST FUNCTION ---
-def generate_ai_memo(api_key, ticker, price, lower, upper, status, outliers, volatility):
+# --- AI ANALYST GENERATOR (For Streaming) ---
+def stream_ai_memo(api_key, ticker, price, lower, upper, status, outliers, volatility):
+    """
+    Generator function that yields chunks of text for streaming.
+    """
     if not api_key:
-        return "⚠️ API Key missing. Please enter it in the sidebar or secrets."
-    
+        yield "⚠️ API Key missing. Please enter it in the sidebar or secrets."
+        return
+
     try:
         client = Groq(api_key=api_key)
         
@@ -84,27 +108,37 @@ def generate_ai_memo(api_key, ticker, price, lower, upper, status, outliers, vol
         - Volatility Spread: {volatility:.2f}%
         - Anomalies Detected: {len(outliers)}
         
-        Write a "Flash Note" (max 100 words) for the Portfolio Manager.
-        1. Interpret the regime (Stable vs Overbought/Oversold).
+        Write a "Flash Note" for the Portfolio Manager.
+        1. Interpret the regime.
         2. Recommend an action (Hold, Mean Reversion Trade, or Hedge).
-        3. Be concise and professional.
+        3. Be concise (max 80 words).
+        
+        IMPORTANT: Do NOT include a title like "Flash Note". Start directly with the analysis text.
         """
         
-        completion = client.chat.completions.create(
+        # Request Streaming Response
+        stream = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-            max_tokens=200,
+            temperature=0.6,
+            max_tokens=250,
+            stream=True  # Enable Streaming
         )
-        return completion.choices[0].message.content
+        
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+
     except Exception as e:
-        return f"AI Error: {e}"
+        yield f"AI Connection Error: {e}"
 
 # Initialize Session State
 if 'analysis_data' not in st.session_state:
     st.session_state['analysis_data'] = None
 if 'ticker_symbol' not in st.session_state:
     st.session_state['ticker_symbol'] = None
+if 'ai_memo' not in st.session_state:
+    st.session_state['ai_memo'] = None
 
 # -------------------------------
 # 3. Sidebar & Navigation
@@ -119,7 +153,7 @@ if page == "Dashboard":
     st.sidebar.markdown("---")
     st.sidebar.header("⚙️ Asset Configuration")
 
-    # --- API KEY LOGIC (Secrets -> Sidebar Fallback) ---
+    # --- API KEY LOGIC ---
     api_key = st.secrets.get("GROQ_API_KEY")
     if not api_key:
         api_key = st.sidebar.text_input("🔑 Groq API Key (for AI)", type="password")
@@ -152,6 +186,7 @@ if page == "Dashboard":
         if reset_clicked:
             st.session_state['analysis_data'] = None
             st.session_state['ticker_symbol'] = None
+            st.session_state['ai_memo'] = None # Clear AI memo on reset
             st.rerun()
 
         # RUN LOGIC
@@ -163,6 +198,7 @@ if page == "Dashboard":
                     
                     st.session_state['analysis_data'] = forecast_data
                     st.session_state['ticker_symbol'] = ticker_symbol
+                    st.session_state['ai_memo'] = None # Clear old memo on new run
                 except Exception as e:
                     st.error(f"Computation Error: {e}")
 
@@ -183,7 +219,6 @@ if page == "Dashboard":
 
         # --- METRIC CALCULATIONS ---
         kl_div = calculate_kl_divergence(plot_data['Close'], plot_data['close_avg'])
-        
         plot_data['spread_pct'] = ((plot_data['close_max'] - plot_data['close_min']) / plot_data['Close']) * 100
         avg_vol_spread = plot_data['spread_pct'].mean()
 
@@ -204,7 +239,6 @@ if page == "Dashboard":
 
         # --- UI: Metrics Row ---
         st.markdown("---")
-        # Fixed Column Ratio for Bounds Visibility
         col1, col2, col3, col4 = st.columns([1, 1, 1, 1.5])
         with col1: st.metric("Asset Price", f"${current_price:.2f}")
         with col2: st.metric("KL Divergence", f"{kl_div:.2e}")
@@ -216,11 +250,21 @@ if page == "Dashboard":
         outliers = plot_data[~plot_data['in_range']].copy()
         has_breaches = not outliers.empty
 
-        # --- AI ANALYST SECTION ---
+        # --- AI ANALYST SECTION (STREAMING) ---
         st.markdown("###")
+        
+        # Button to Trigger Generation
         if st.button("🤖 Generate AI Analyst Memo"):
-            with st.spinner("Consulting AI Model..."):
-                memo = generate_ai_memo(
+            # Create a container for the streaming output
+            with st.container():
+                st.markdown(f"""
+                <div class="ai-card">
+                    <div class="ai-header">🤖 AI Flash Note (Live Generation...)</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Generate the stream
+                stream = stream_ai_memo(
                     api_key=api_key,
                     ticker=current_ticker,
                     price=current_price,
@@ -230,7 +274,22 @@ if page == "Dashboard":
                     outliers=outliers,
                     volatility=avg_vol_spread
                 )
-                st.info(f"**AI Flash Note:**\n\n{memo}")
+                
+                # Stream to UI and capture final text
+                response = st.write_stream(stream)
+                
+                # Save to state so it persists
+                st.session_state['ai_memo'] = response
+                st.rerun() # Rerun to render the final static card
+
+        # Display Persistent Memo (If it exists)
+        if st.session_state['ai_memo']:
+            st.markdown(f"""
+            <div class="ai-card">
+                <div class="ai-header">🤖 AI Flash Note</div>
+                {st.session_state['ai_memo']}
+            </div>
+            """, unsafe_allow_html=True)
 
         # --- DYNAMIC TABS ---
         tab_names = ["📈 Time Series", "🔔 Distribution (KDE)", "📉 Correlation Matrix"]
