@@ -120,7 +120,7 @@ def stream_ai_memo(api_key, ticker, price, lower, upper, status, outliers, volat
         stream = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.6,
+            temperature=1.1,
             max_tokens=250,
             stream=True  # Enable Streaming
         )
