@@ -7,9 +7,6 @@ from chebychev import ChebychevForecast
 from scipy.stats import entropy, gaussian_kde
 from datetime import datetime, timedelta
 import os
-
-# --- NEW IMPORT FOR AI ---
-# Ensure you run: pip install groq
 from groq import Groq 
 
 # -------------------------------
@@ -94,7 +91,7 @@ def generate_ai_memo(api_key, ticker, price, lower, upper, status, outliers, vol
         """
         
         completion = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model="openai/gpt-oss-20b",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
             max_tokens=200,
