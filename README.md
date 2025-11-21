@@ -2,12 +2,7 @@
 
 A non-parametric volatility model for detecting "Black Swan" anomalies in asset prices.
 
-🎥 Live Demo
-
-<!-- [Upload a 30s Loom/YouTube video or a GIF here showing the bounds updating] -->
-
-
-(Click image to watch demo)
+🎥 ![App Preview](chebychev_pricing_engine.gif)
 
 🚀 Overview
 
