@@ -2,7 +2,7 @@
 
 A non-parametric volatility model for detecting "Black Swan" anomalies in asset prices.
 
-🎥 ![App Preview](chebychev_pricing_engine.gif)
+![App Preview](chebychev_pricing_engine.gif)
 
 🚀 Overview
 
